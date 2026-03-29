@@ -1,0 +1,20 @@
+{
+"type": "FeatureCollection",
+"name": "olive",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "지점명": "파주봉일천점", "업종": "화장품/뷰티", "주소": "경기도 파주시 조리읍 봉천로 35-1 1층" }, "geometry": { "type": "Point", "coordinates": [ 126.814234, 37.747385 ] } },
+{ "type": "Feature", "properties": { "지점명": "파주야당역점", "업종": "화장품/뷰티", "주소": "경기도 파주시 경의로 1066 야당중앙타워" }, "geometry": { "type": "Point", "coordinates": [ 126.762117, 37.712166 ] } },
+{ "type": "Feature", "properties": { "지점명": "스타필드빌리지운정점", "업종": "화장품/뷰티", "주소": "경기도 파주시 와석순환로515번길 70" }, "geometry": { "type": "Point", "coordinates": [ 126.74548, 37.7196 ] } },
+{ "type": "Feature", "properties": { "지점명": "파주운정점", "업종": "화장품/뷰티", "주소": "경기도 파주시 미래로 377 운정스퀘어" }, "geometry": { "type": "Point", "coordinates": [ 126.73747, 37.721204 ] } },
+{ "type": "Feature", "properties": { "지점명": "파주가람점", "업종": "화장품/뷰티", "주소": "경기도 파주시 가람로 2 센터프라자" }, "geometry": { "type": "Point", "coordinates": [ 126.760196, 37.726584 ] } },
+{ "type": "Feature", "properties": { "지점명": "파주금릉역점", "업종": "화장품/뷰티", "주소": "경기도 파주시 금빛로 44-2" }, "geometry": { "type": "Point", "coordinates": [ 126.765692, 37.7495 ] } },
+{ "type": "Feature", "properties": { "지점명": "홈플러스파주운정점", "업종": "화장품/뷰티", "주소": "경기도 파주시 청암로17번길 17 홈플러스 1층" }, "geometry": { "type": "Point", "coordinates": [ 126.726668, 37.716952 ] } },
+{ "type": "Feature", "properties": { "지점명": "파주초롱꽃마을점", "업종": "화장품/뷰티", "주소": "경기도 파주시 청석로 115 반석프라자 111~113호" }, "geometry": { "type": "Point", "coordinates": [ 126.721473, 37.705886 ] } },
+{ "type": "Feature", "properties": { "지점명": "파주금촌점", "업종": "화장품/뷰티", "주소": "경기도 파주시 문화로 109" }, "geometry": { "type": "Point", "coordinates": [ 126.776609, 37.765103 ] } },
+{ "type": "Feature", "properties": { "지점명": "파주다율점", "업종": "화장품/뷰티", "주소": "경기도 파주시 해올2길 20 채움빌딩" }, "geometry": { "type": "Point", "coordinates": [ 126.724654, 37.731215 ] } },
+{ "type": "Feature", "properties": { "지점명": "파주교하점", "업종": "화장품/뷰티", "주소": "경기도 파주시 청석로 260 트리플메디칼타워" }, "geometry": { "type": "Point", "coordinates": [ 126.71448, 37.721999 ] } },
+{ "type": "Feature", "properties": { "지점명": "신세계프리미엄아울렛파주점", "업종": "화장품/뷰티", "주소": "경기도 파주시 탄현면 필승로 200" }, "geometry": { "type": "Point", "coordinates": [ 126.696144, 37.769062 ] } },
+{ "type": "Feature", "properties": { "지점명": "파주문산점", "업종": "화장품/뷰티", "주소": "경기도 파주시 문산읍 문향로 71 신성타워" }, "geometry": { "type": "Point", "coordinates": [ 126.787682, 37.854964 ] } }
+]
+}
