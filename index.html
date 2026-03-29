@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>김포 연습</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <style>
+    body { margin: 0; }
+    #map { height: 100vh; }
+
+    .leaflet-top.leaflet-left .leaflet-control-layers {
+      margin-top: 60px;
+    }
+
+    #bufferUI {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      font-size: 13px;
+      width: 180px;
+    }
+
+    #introOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 2000;
+    }
+
+    #introBox {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 35px 30px;
+      border-radius: 12px;
+      width: 440px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .intro-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .intro-desc {
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+
+    .intro-example {
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 25px;
+    }
+
+    #introBox button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      background: #3388ff;
+      color: white;
+      cursor: pointer;
+    }
+
+    .info.legend {
+      background: white;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 18px;
+      color: #333;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      border-radius: 5px;
+    }
+
+    .info.legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<!-- 버퍼 UI -->
+<div id="bufferUI">
+  <b>버퍼 분석</b><br><br>
+
+  <label><input type="radio" name="bufferTarget" value="karaoke"> 단란/유흥주점</label><br>
+  <label><input type="radio" name="bufferTarget" value="air"> 대기오염배출시설</label><br>
+  <label><input type="radio" name="bufferTarget" value="subway"> 도시철도</label><br>
+  <label><input type="radio" name="bufferTarget" value="dust"> 먼지발생사업장</label><br>
+  <label><input type="radio" name="bufferTarget" value="cool"> 무더위쉼터</label><br>
+  <label><input type="radio" name="bufferTarget" value="study"> 스터디카페</label><br>
+  <label><input type="radio" name="bufferTarget" value="safehouse"> 아동안전지킴이집</label><br>
+  <label><input type="radio" name="bufferTarget" value="olive"> 올리브영</label><br>
+
+  <br><br>
+
+  거리(m)<br>
+  <input type="number" id="bufferDistance" value="100" style="width:100%">
+
+  <br><br>
+
+  <button onclick="updateBuffer()" style="width:100%">버퍼 실행</button>
+  <button onclick="clearBuffer()" style="width:100%; margin-top:5px;">초기화</button>
+</div>
+
+<!-- 안내 -->
+<div id="introOverlay">
+  <div id="introBox">
+    <div class="intro-title">
+  '공간 정의' <br> 공간적 측면에서 사회적으로 가치 있는 자원과 그 자원으로의 접근성이 공정하게 분배되었는가
+</div>
+<div class="intro-desc">
+  우리 삶에 영향을 미치는 편의⋅안전⋅기피 시설의 지역 격차 등 공간 불평등 사례를 파악하기
+</div>
+<div class="intro-example">
+  ex) 유아 인구는 많지만 아동안전지킴이집이 가까운 곳에 없는 동네는?
+</div>
+<button onclick="closeIntro()">확인</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+var map = L.map('map').setView([37.617, 126.719], 17);
+
+L.tileLayer(
+  'https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png',
+  { maxZoom: 19 }
+).addTo(map);
+
+var bufferLayer = L.layerGroup().addTo(map);
+
+var siLayer;
+var safehouseLayer, coolLayer, subwayLayer, oliveLayer;
+var karaokeLayer, studyLayer, dustLayer, airLayer;
+var infantLayer, highFLayer, highMLayer, seniorLayer;
+
+function getColor(val) {
+  return val >= 100 ? '#800026' :
+         val >= 75  ? '#BD0026' :
+         val >= 50  ? '#E31A1C' :
+         val >= 25  ? '#FC4E2A' :
+         val > 0    ? '#FD8D3C' :
+                      '#FFFFFF';
+}
+
+function populationStyle(feature) {
+  var val = Number(feature.properties.val) || 0;
+  return {
+    fillColor: getColor(val),
+    fillOpacity: val === 0 ? 0 : 0.5,
+    stroke: false
+  };
+}
+
+function bindSimplePopup(feature, layer) {
+  let html = "";
+  for (let key in feature.properties) {
+    html += `<b>${key}</b>: ${feature.properties[key]}<br>`;
+  }
+  layer.bindPopup(html);
+}
+
+function getSelectedLayer() {
+  const selected = document.querySelector('input[name="bufferTarget"]:checked');
+  if (!selected) return null;
+
+  if (selected.value === "safehouse") return safehouseLayer;
+  if (selected.value === "cool") return coolLayer;
+  if (selected.value === "subway") return subwayLayer;
+  if (selected.value === "olive") return oliveLayer;
+  if (selected.value === "karaoke") return karaokeLayer;
+  if (selected.value === "study") return studyLayer;
+  if (selected.value === "dust") return dustLayer;
+  if (selected.value === "air") return airLayer;
+}
+
+function updateBuffer() {
+  const layer = getSelectedLayer();
+  const distance = Number(document.getElementById("bufferDistance").value);
+
+  if (!layer) {
+    alert("대상을 선택하세요");
+    return;
+  }
+
+  bufferLayer.clearLayers();
+
+  layer.eachLayer(function(l) {
+    if (l.getLatLng) {
+      L.circle(l.getLatLng(), {
+        radius: distance,
+        fillColor: '#3388ff',
+        fillOpacity: 0.15,
+        stroke: false
+      }).addTo(bufferLayer);
+    }
+  });
+}
+
+function clearBuffer() {
+  bufferLayer.clearLayers();
+}
+
+function closeIntro() {
+  document.getElementById("introOverlay").style.display = "none";
+}
+
+var legend = L.control({ position: 'bottomright' });
+legend.onAdd = function () {
+  var div = L.DomUtil.create('div', 'info legend');
+  var grades = [0,25,50,75,100];
+  div.innerHTML += '<b>인구 (명)</b><br>';
+  for (var i=0;i<grades.length;i++){
+    var from = grades[i];
+    var to = grades[i+1];
+    div.innerHTML +=
+      '<i style="background:' + getColor(from+1) + '"></i> ' +
+      from + (to ? '&ndash;' + to : '+') + '<br>';
+  }
+  return div;
+};
+
+Promise.all([
+  fetch('si.geojson').then(r => r.json()),
+  fetch('infant.geojson').then(r => r.json()),
+  fetch('high_f.geojson').then(r => r.json()),
+  fetch('high_m.geojson').then(r => r.json()),
+  fetch('senior.geojson').then(r => r.json()),
+  fetch('safehouse.geojson').then(r => r.json()),
+  fetch('cool.geojson').then(r => r.json()),
+  fetch('subway.geojson').then(r => r.json()),
+  fetch('olive.geojson').then(r => r.json()),
+  fetch('karaoke.geojson').then(r => r.json()),
+  fetch('study.geojson').then(r => r.json()),
+  fetch('dust.geojson').then(r => r.json()),
+  fetch('air.geojson').then(r => r.json()),
+  fetch('greenbelt.geojson').then(r => r.json()),
+  fetch('military.geojson').then(r => r.json())
+])
+.then(([siData, infantData, highFData, highMData, seniorData,
+        safehouseData, coolData, subwayData, oliveData,
+        karaokeData, studyData, dustData, airData,
+       greenbeltData, militaryData]) => {
+
+  infantLayer = L.geoJSON(infantData, { style: populationStyle });
+  highFLayer = L.geoJSON(highFData, { style: populationStyle });
+  highMLayer = L.geoJSON(highMData, { style: populationStyle });
+  seniorLayer = L.geoJSON(seniorData, { style: populationStyle });
+
+  siLayer = L.geoJSON(siData, {
+    style: { color:"#000", weight:3, dashArray:"6,6", fillOpacity:0 }
+  }).addTo(map);
+
+var greenbeltLayer = L.geoJSON(greenbeltData, {
+  style: {
+    stroke: false,
+    fillColor: "#A5D6A7",
+    fillOpacity: 0.35
+  },
+  onEachFeature: bindSimplePopup
+});
+
+var militaryLayer = L.geoJSON(militaryData, {
+  style: {
+    stroke: false, 
+    fillColor: "#1B5E20",
+    fillOpacity: 0.35
+  },
+  onEachFeature: bindSimplePopup
+});
+
+
+  
+  safehouseLayer = L.geoJSON(safehouseData,{pointToLayer:(f,l)=>L.marker(l),onEachFeature:bindSimplePopup});
+  coolLayer = L.geoJSON(coolData,{pointToLayer:(f,l)=>L.marker(l),onEachFeature:bindSimplePopup});
+  subwayLayer = L.geoJSON(subwayData,{pointToLayer:(f,l)=>L.marker(l),onEachFeature:bindSimplePopup});
+  oliveLayer = L.geoJSON(oliveData,{pointToLayer:(f,l)=>L.marker(l),onEachFeature:bindSimplePopup});
+  karaokeLayer = L.geoJSON(karaokeData,{pointToLayer:(f,l)=>L.marker(l),onEachFeature:bindSimplePopup});
+  studyLayer = L.geoJSON(studyData,{pointToLayer:(f,l)=>L.marker(l),onEachFeature:bindSimplePopup});
+  dustLayer = L.geoJSON(dustData,{pointToLayer:(f,l)=>L.marker(l),onEachFeature:bindSimplePopup});
+  airLayer = L.geoJSON(airData,{pointToLayer:(f,l)=>L.marker(l),onEachFeature:bindSimplePopup});
+
+
+  
+  var baseLayers = {
+    "유아 인구": infantLayer,
+    "여고생 인구": highFLayer,
+    "남고생 인구": highMLayer,
+    "노년 인구": seniorLayer
+  };
+
+  var overlays = {
+    "시 경계": siLayer,
+    "개발제한구역": greenbeltLayer,
+    "군사보호구역": militaryLayer,
+    "단란/유흥주점": karaokeLayer,
+    "대기오염배출시설": airLayer,
+    "도시철도": subwayLayer,
+    "먼지발생사업장": dustLayer,
+    "무더위쉼터": coolLayer,
+    "스터디카페": studyLayer,
+    "아동안전지킴이집": safehouseLayer,
+    "올리브영": oliveLayer
+  };
+
+  L.control.layers(baseLayers, overlays, {
+    collapsed:false,
+    position:'topleft'
+  }).addTo(map);
+});
+
+map.on('baselayerchange', function() {
+  legend.addTo(map);
+});
+</script>
+
+</body>
+</html>
