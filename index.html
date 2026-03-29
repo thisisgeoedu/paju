@@ -257,13 +257,12 @@ Promise.all([
   fetch('study.geojson').then(r => r.json()),
   fetch('dust.geojson').then(r => r.json()),
   fetch('air.geojson').then(r => r.json()),
-  fetch('greenbelt.geojson').then(r => r.json()),
   fetch('military.geojson').then(r => r.json())
 ])
 .then(([siData, infantData, highFData, highMData, seniorData,
         safehouseData, coolData, subwayData, oliveData,
         karaokeData, studyData, dustData, airData,
-       greenbeltData, militaryData]) => {
+       militaryData]) => {
 
   infantLayer = L.geoJSON(infantData, { style: populationStyle });
   highFLayer = L.geoJSON(highFData, { style: populationStyle });
@@ -274,14 +273,6 @@ Promise.all([
     style: { color:"#000", weight:3, dashArray:"6,6", fillOpacity:0 }
   }).addTo(map);
 
-var greenbeltLayer = L.geoJSON(greenbeltData, {
-  style: {
-    stroke: false,
-    fillColor: "#A5D6A7",
-    fillOpacity: 0.35
-  },
-  onEachFeature: bindSimplePopup
-});
 
 var militaryLayer = L.geoJSON(militaryData, {
   style: {
